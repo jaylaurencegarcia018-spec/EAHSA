@@ -1,0 +1,169 @@
+@{
+Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="utf-8" />
+<title>User Panel</title>
+<link rel="stylesheet" href="~/css/site.css" />
+
+<style>
+
+body{
+margin:0;
+font-family:Arial, Helvetica, sans-serif;
+display:flex;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+width:240px;
+height:100vh;
+background:#1f2d3d;
+color:white;
+position:fixed;
+left:0;
+top:0;
+}
+
+/* LOGO */
+
+.sidebar-logo{
+display:flex;
+align-items:center;
+gap:10px;
+padding:20px;
+border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-logo img{
+width:40px;
+height:40px;
+border-radius:50%;
+object-fit:cover;
+}
+
+.sidebar-logo span{
+font-size:18px;
+font-weight:bold;
+}
+
+/* LINKS */
+
+.sidebar a{
+display:block;
+color:white;
+padding:15px 20px;
+text-decoration:none;
+font-size:16px;
+cursor:pointer;
+}
+
+.sidebar a:hover{
+background:#2e3f55;
+}
+
+/* DROPDOWN */
+
+.dropdown-container{
+display:none;
+background:#2e3f55;
+}
+
+.dropdown-container a{
+padding-left:40px;
+font-size:15px;
+}
+
+.dropdown-container a:hover{
+background:#3a4f6a;
+}
+
+/* CONTENT */
+
+.content{
+margin-left:240px;
+padding:30px;
+width:100%;
+}
+
+</style>
+
+</head>
+
+<body>
+
+@inject SupabaseService _supabase
+
+@{
+    var allowedSections = Context.Session.GetString("AllowedSections") ?? "";
+    var sectionList = allowedSections.Split(",", StringSplitOptions.RemoveEmptyEntries);
+
+    var response = await _supabase.Client
+        .From<EAHSA.Models.Attendance>()
+        .Get();
+
+    var records = response.Models;
+
+    var allowedGrades = records
+        .Where(x => sectionList.Contains(x.Section))
+        .Select(x => x.GradeLevel)
+        .Distinct()
+        .OrderBy(x => x)
+        .ToList();
+}
+
+<div class="sidebar">
+
+    <div class="sidebar-logo">
+        <img src="~/images/logo.png" />
+        <span>EAHSA User</span>
+    </div>
+
+    <!-- Attendance Dropdown -->
+
+    <a href="javascript:void(0)" onclick="toggleAttendance()">
+        📅 Attendance ▼
+    </a>
+
+    <div id="attendanceMenu" class="dropdown-container">
+
+        @foreach (var grade in allowedGrades)
+        {
+            <a asp-page="/Users/Attendance" asp-route-SelectedGrade="@grade">
+                Grade @grade
+            </a>
+        }
+
+    </div>
+
+</div>
+
+<!-- CONTENT -->
+
+<div class="content">
+    @RenderBody()
+</div>
+
+<script>
+
+function toggleAttendance(){
+
+var menu = document.getElementById("attendanceMenu");
+
+if(menu.style.display === "block"){
+menu.style.display = "none";
+}else{
+menu.style.display = "block";
+}
+
+}
+
+</script>
+
+</body>
+</html>

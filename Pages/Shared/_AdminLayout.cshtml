@@ -1,0 +1,150 @@
+@{
+Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+
+<style>
+    body{
+        margin:0;
+        font-family:Arial, Helvetica, sans-serif;
+        display:flex;
+    }
+
+    /* SIDEBAR */
+
+    .sidebar{
+        width:240px;
+        height:100vh;
+        background:#1f2d3d;
+        color:white;
+        position:fixed;
+        left:0;
+        top:0;
+    }
+
+    /* LOGO HEADER */
+
+    .sidebar-logo{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:20px;
+        border-bottom:1px solid rgba(255,255,255,0.1);
+    }
+
+    .sidebar-logo img{
+        width:40px;
+        height:40px;
+        border-radius:50%;
+        object-fit:cover;
+    }
+
+    .sidebar-logo span{
+        font-size:18px;
+        font-weight:bold;
+    }
+
+    /* SIDEBAR LINKS */
+
+    .sidebar a{
+        display:block;
+        color:white;
+        padding:15px 20px;
+        text-decoration:none;
+        font-size:16px;
+    }
+
+    .sidebar a:hover{
+        background:#2e3f55;
+    }
+
+    /* DROPDOWN */
+
+    .dropdown-menu{
+        display:none;
+        background:#2e3f55;
+    }
+
+    .dropdown-menu a{
+        padding-left:40px;
+        font-size:14px;
+    }
+
+    .dropdown-menu a:hover{
+        background:#3a4f6a;
+    }
+
+    /* CONTENT */
+
+    .content{
+        margin-left:240px;
+        padding:30px;
+        width:100%;
+    }
+
+</style>
+
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+
+    <div class="sidebar-logo">
+        <img src="~/images/logo.png" alt="School Logo">
+        <span>EAHSA Admin</span>
+    </div>
+
+    <a asp-page="/Admin/Dashboard">📊 Dashboard</a>
+
+    <div class="dropdown">
+
+        <a href="#" onclick="toggleAttendance()">📅 Attendance ▾</a>
+
+        <div id="attendanceMenu" class="dropdown-menu">
+
+            <a asp-page="/Admin/Attendance" asp-route-grade="7">Grade 7</a>
+            <a asp-page="/Admin/Attendance" asp-route-grade="8">Grade 8</a>
+            <a asp-page="/Admin/Attendance" asp-route-grade="9">Grade 9</a>
+            <a asp-page="/Admin/Attendance" asp-route-grade="10">Grade 10</a>
+
+        </div>
+
+    </div>
+
+    <a asp-page="/Admin/ID">🆔 ID Management</a>
+    <a asp-page="/Admin/Register">👤 Register User</a>
+
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+    @RenderBody()
+</div>
+
+<script>
+
+    function toggleAttendance(){
+
+        var menu = document.getElementById("attendanceMenu");
+
+        if(menu.style.display === "block"){
+            menu.style.display = "none";
+        }else{
+            menu.style.display = "block";
+        }
+
+    }
+
+</script>
+
+</body>
+</html>

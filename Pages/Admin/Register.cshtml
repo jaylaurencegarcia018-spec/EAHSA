@@ -1,0 +1,90 @@
+@page
+@model EAHSA.Pages.Admin.RegisterModel
+@{
+Layout = "_AdminLayout";
+}
+
+<div class="register-page">
+
+<div class="register-box">
+
+    <div class="register-header">
+        <h2>Register User</h2>
+    </div>
+
+    <!-- Success Message -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    <!-- Error Message -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert-error">
+            @TempData["Error"]
+        </div>
+    }
+
+    <form method="post">
+
+        <div class="input-box">
+            <span class="icon">📧</span>
+            <input asp-for="Email" type="email" placeholder="Email" required />
+        </div>
+
+        <div class="input-box">
+            <span class="icon">🔒</span>
+            <input asp-for="Password" type="password" placeholder="Password" required />
+        </div>
+
+        <div class="input-box">
+            <span class="icon">🔒</span>
+            <input asp-for="ConfirmPassword" type="password" placeholder="Confirm Password" required />
+        </div>
+
+        <div class="section-title">Allowed Sections</div>
+
+        @if (Model.GradeSections != null && Model.GradeSections.Count > 0)
+        {
+            foreach (var grade in Model.GradeSections)
+            {
+                <div class="grade-group">
+
+                    <div class="grade-title">
+                        Grade @grade.Key
+                    </div>
+
+                    <div class="section-list">
+
+                        @foreach (var sec in grade.Value)
+                        {
+                            <label class="section-item">
+                                <input type="checkbox" name="Sections" value="@sec"
+                                       @(Model.Sections.Contains(sec) ? "checked" : "") />
+                                <span>@sec</span>
+                            </label>
+                        }
+
+                    </div>
+
+                </div>
+            }
+        }
+        else
+        {
+            <p style="color: gray;">No sections found in database.</p>
+        }
+
+        <button class="register-btn" type="submit">
+            Register
+        </button>
+
+    </form>
+
+</div>
+
+
+</div>

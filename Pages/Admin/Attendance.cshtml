@@ -1,0 +1,257 @@
+@page
+@model EAHSA.Pages.Admin.AttendanceModel
+
+@{
+    Layout = "_AdminLayout";
+}
+
+<link rel="stylesheet" href="~/css/attendance.css" />
+
+<h1>Attendance</h1>
+<p>Manage student attendance records below.</p>
+
+<div class="actions">
+    <button class="btn-dark" onclick="openModal()">Add</button>
+    <a id="printBtn" class="btn-gray">Print</a>
+</div>
+
+<div class="filters">
+    <select id="sectionFilter" onchange="filterSection()">
+        <option value="">All Sections</option>
+        @foreach (var sec in Model.AttendanceList.Select(x => x.Section).Distinct())
+        {
+            <option value="@sec">@sec</option>
+        }
+    </select>
+
+    <input type="date" id="dateFilter"
+       value="@(Model.date.HasValue ? Model.date.Value.ToString("yyyy-MM-dd") : "")"
+       onchange="filterDate()" />
+    <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Search student..." />
+</div>
+
+<table id="attendanceTable">
+    <thead>
+        <tr>
+            <th>Photo</th>
+            <th>Grade Level</th>
+            <th>Section</th>
+            <th>Gender</th>
+            <th>Name</th>
+            <th>LRN</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var item in Model.AttendanceList)
+        {
+            <tr>
+                <td>
+                    <img src="@(string.IsNullOrEmpty(item.Photo) ? "/images/default.png" : item.Photo)"
+                         width="40"
+                         height="40"
+                         style="border-radius:50%;object-fit:cover;" />
+                </td>
+                <td>@item.GradeLevel</td>
+                <td class="section">@item.Section</td>
+                <td>@item.Gender</td>
+                <td>@item.Name</td>
+                <td>@item.LRN</td>
+                <td>@item.Status</td>
+                <td>
+                    <button class="btn-dark"
+                            onclick="openEditModal('@item.Id','@item.GradeLevel','@item.Section','@item.Gender','@item.Name','@item.LRN','@item.Status')">
+                        Edit
+                    </button>
+
+                    <form method="post" asp-page-handler="Delete" style="display:inline;">
+                        <input type="hidden" name="Id" value="@item.Id" />
+                        <button type="submit"
+                                class="btn-danger"
+                                onclick="return confirm('Are you sure you want to delete this student?')">
+                            Delete
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- ADD MODAL -->
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <h3>Add Attendance</h3>
+
+        <form method="post" asp-page-handler="Add" enctype="multipart/form-data">
+            <input type="hidden" name="GradeLevel" value="@Model.grade" />
+            <p><strong>Grade Level:</strong> @Model.grade</p>
+
+            <input type="text" name="Section" placeholder="Section" required />
+            <input type="text" name="Gender" placeholder="Gender" required />
+            <input type="text" name="Name" placeholder="Name" required />
+            <input type="text" name="LRN" placeholder="LRN" required />
+
+            <label>Student Photo (1x1)</label>
+            <input type="file" name="PhotoFile" accept="image/*" required />
+
+            <select name="Status">
+                <option value="Present">Present</option>
+                <option value="Absent">Absent</option>
+            </select>
+
+            <div class="modal-buttons">
+                <button type="submit" class="btn-dark">Save</button>
+                <button type="button" class="btn-gray" onclick="closeModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h3>Edit Attendance</h3>
+
+        <form method="post" asp-page-handler="Edit" enctype="multipart/form-data">
+            <input type="hidden" id="editId" name="Id" />
+
+            <select id="editGrade" name="GradeLevel" required>
+                <option value="7">Grade 7</option>
+                <option value="8">Grade 8</option>
+                <option value="9">Grade 9</option>
+                <option value="10">Grade 10</option>
+            </select>
+
+            <input type="text" id="editSection" name="Section" required />
+            <input type="text" id="editGender" name="Gender" required />
+            <input type="text" id="editName" name="Name" required />
+            <input type="text" id="editLRN" name="LRN" required />
+
+            <label>Replace Photo</label>
+            <input type="file" name="PhotoFile" accept="image/*" />
+
+            <select id="editStatus" name="Status">
+                <option value="Present">Present</option>
+                <option value="Absent">Absent</option>
+            </select>
+
+            <div class="modal-buttons">
+                <button type="submit" class="btn-dark">Update</button>
+                <button type="button" class="btn-gray" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModal() {
+        document.getElementById("addModal").style.display = "flex";
+    }
+
+    function closeModal() {
+        document.getElementById("addModal").style.display = "none";
+    }
+
+    function searchTable() {
+        var input = document.getElementById("searchInput");
+        var filter = input.value.toLowerCase();
+        var rows = document.querySelectorAll("#attendanceTable tbody tr");
+
+        rows.forEach(row => {
+            if (row.innerText.toLowerCase().includes(filter))
+                row.style.display = "";
+            else
+                row.style.display = "none";
+        });
+    }
+
+function filterSection() {
+    var section = document.getElementById("sectionFilter").value;
+    var date = document.getElementById("dateFilter").value;
+
+    if (date !== "") {
+        filterDate(); // reuse logic
+        return;
+    }
+
+    var rows = document.querySelectorAll("#attendanceTable tbody tr");
+
+    rows.forEach(row => {
+        var rowSection = row.querySelector(".section").innerText;
+
+        if (section === "" || rowSection === section)
+            row.style.display = "";
+        else
+            row.style.display = "none";
+    });
+}
+
+function filterDate() {
+    var date = document.getElementById("dateFilter").value;
+    var section = document.getElementById("sectionFilter").value;
+
+    if (date === "") return;
+
+    fetch(`?handler=FilterByDate&date=${date}&section=${encodeURIComponent(section)}`)
+        .then(response => response.json())
+        .then(data => {
+            var tbody = document.querySelector("#attendanceTable tbody");
+            tbody.innerHTML = "";
+
+            data.forEach(item => {
+                var row = `
+                    <tr>
+                        <td><img src="${item.photo || '/images/default.png'}" width="40" height="40" style="border-radius:50%;object-fit:cover;" /></td>
+                        <td>${item.gradeLevel}</td>
+                        <td class="section">${item.section}</td>
+                        <td>${item.gender}</td>
+                        <td>${item.name}</td>
+                        <td>${item.lrn}</td>
+                        <td>${item.status}</td>
+                        <td>
+                            <button class="btn-dark">Edit</button>
+                            <button class="btn-danger">Delete</button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        })
+        .catch(err => console.error("ERROR:", err));
+}
+
+    function openEditModal(id, grade, section, gender, name, lrn, status) {
+        document.getElementById("editId").value = id;
+        document.getElementById("editGrade").value = grade;
+        document.getElementById("editSection").value = section;
+        document.getElementById("editGender").value = gender;
+        document.getElementById("editName").value = name;
+        document.getElementById("editLRN").value = lrn;
+        document.getElementById("editStatus").value = status;
+        document.getElementById("editModal").style.display = "flex";
+    }
+
+    function closeEditModal() {
+        document.getElementById("editModal").style.display = "none";
+    }
+
+    document.getElementById("printBtn").addEventListener("click", function () {
+        var section = document.getElementById("sectionFilter").value;
+        var date = document.getElementById("dateFilter").value;
+
+        if (section === "") {
+            section = "AllSections";
+        }
+
+        var url = "?handler=ExportExcel&Section=" + section;
+
+        if (date !== "") {
+            url += "&date=" + date;
+        }
+
+        window.location.href = url;
+    });
+</script>

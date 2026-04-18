@@ -1,0 +1,154 @@
+@page
+@model ScanModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Scan Attendance</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+
+body{
+font-family: Arial;
+background:#f2f2f2;
+text-align:center;
+}
+
+#reader{
+width:350px;
+margin:auto;
+margin-top:30px;
+}
+
+.popup{
+display:none;
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:white;
+padding:40px;
+width:700px;
+box-shadow:0 0 20px rgba(0,0,0,0.3);
+}
+
+.student{
+display:flex;
+gap:40px;
+align-items:center;
+}
+
+.photo{
+width:200px;
+height:200px;
+border:6px solid black;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.info{
+text-align:left;
+font-size:22px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>Scan Student Barcode</h2>
+
+<div id="reader"></div>
+
+<p>Scanned LRN:</p>
+<div id="scanResult" style="font-size:20px; color:green;"></div>
+
+<div id="popup" class="popup">
+
+<div class="student">
+
+<div class="photo">
+<img id="photo" width="200">
+</div>
+
+<div class="info">
+
+<div>NAME:</div>
+<h2 id="name"></h2>
+
+<div>GRADE LEVEL:</div>
+<h2 id="grade"></h2>
+
+<div>LRN:</div>
+<h2 id="lrn"></h2>
+
+</div>
+
+<div class="info">
+
+<div>GENDER:</div>
+<h2 id="gender"></h2>
+
+<div>SECTION:</div>
+<h2 id="section"></h2>
+
+
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function onScanSuccess(decodedText){
+
+document.getElementById("scanResult").innerText = decodedText;
+
+fetch('/Users/Scan?handler=ScanStudent', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: 'lrn=' + decodedText
+})
+.then(res => res.json())
+.then(data => {
+
+    if(data.success){
+
+        document.getElementById("name").innerText = data.name
+        document.getElementById("grade").innerText = data.grade
+        document.getElementById("lrn").innerText = data.lrn
+        document.getElementById("gender").innerText = data.gender
+        document.getElementById("section").innerText = data.section
+        document.getElementById("photo").src = "/studentphotos/" + data.photo + ".png";
+
+
+        let popup = document.getElementById("popup")
+        popup.style.display = "block"
+
+        setTimeout(()=>{
+            popup.style.display="none"
+        },3000)
+    }
+
+})
+}
+
+let scanner=new Html5QrcodeScanner("reader",{fps:10,qrbox:250})
+scanner.render(onScanSuccess)
+
+</script>
+
+</body>
+</html>

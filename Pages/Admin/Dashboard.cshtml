@@ -1,0 +1,121 @@
+@page
+@model DashboardModel
+@{
+    Layout = "_AdminLayout";
+}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="dashboard">
+
+<h1>Attendance Dashboard</h1>
+
+<div class="cards">
+
+<div class="row g-4">
+
+<div class="col-md-3">
+<div class="card shadow dashboard-card">
+<div class="card-body">
+
+<h6 class="text-muted">TOTAL STUDENTS</h6>
+<h2>@Model.TotalStudents</h2>
+
+</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card shadow dashboard-card">
+<div class="card-body">
+
+<h6 class="text-success">PRESENT TODAY</h6>
+<h2>@Model.PresentToday</h2>
+
+</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card shadow dashboard-card">
+<div class="card-body">
+
+<h6 class="text-danger">ABSENT TODAY</h6>
+<h2>@Model.AbsentToday</h2>
+
+</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card shadow dashboard-card">
+<div class="card-body">
+
+<h6 class="text-warning">TARDY TODAY</h6>
+<h2>@Model.TardyToday</h2>
+
+</div>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<div class="charts">
+
+<div class="chart-box">
+<h3>Absence Trends</h3>
+<canvas id="absenceChart"></canvas>
+</div>
+
+<div class="recent">
+
+<h3>Recent Absences</h3>
+
+<table>
+<thead>
+<tr>
+<th>Student Name</th>
+<th>Date</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody>
+
+@foreach(var item in Model.RecentAbsences)
+{
+<tr>
+<td>@item.Name</td>
+<td>@item.Date</td>
+<td style="color:red">@item.Status</td>
+</tr>
+}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+var ctx = document.getElementById('absenceChart').getContext('2d');
+
+new Chart(ctx,{
+type:'bar',
+data:{
+labels:@Html.Raw(Json.Serialize(Model.ChartLabels)),
+datasets:[{
+label:'Absences',
+data:@Html.Raw(Json.Serialize(Model.ChartData)),
+borderWidth:1
+}]
+}
+})
+
+</script>
