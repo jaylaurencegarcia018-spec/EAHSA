@@ -164,22 +164,27 @@ var check = await _supabase.Client
     .Get();
     
     var todayRecords = check.Models
-    .Where(x => x.Date.Date == today)
-    .ToList();
+        .Where(x => x.Date.Date == today)
+        .ToList();
 
-if (check.Models.Count == 0)
-{
-    await SaveDailyAttendanceAsync();
-    await ResetAttendanceAsync();
-}
+    // ✅ FIX: kung WALANG record TODAY
+    if (!todayRecords.Any())
+    {
+        await SaveDailyAttendanceAsync();  // save current status (present/absent)
+        await ResetAttendanceAsync();      // reset for next day
+    }
 if (date.HasValue)
 {
+    var start = date.Value.Date;
+    var end = start.AddDays(1);
+
     var history = await _supabase.Client
         .From<RecordAttendance>()
-        .Where(x => x.Date == date.Value.Date)
         .Get();
 
-    var filtered = history.Models.AsQueryable();
+    var filtered = history.Models
+        .Where(x => x.Date >= start && x.Date < end)
+        .AsQueryable();
 
     if (!string.IsNullOrEmpty(grade))
     {
@@ -367,31 +372,25 @@ private async Task SaveDailyAttendanceAsync()
             .From<RecordAttendance>()
             .Get();
 
-        var alreadyExists = existing.Models.Any(x =>
-            x.LRN == student.LRN &&
-            x.Date.Date == today
-        );
+            var alreadyExists = existing.Models.Any(x =>
+        x.LRN == student.LRN &&
+        x.Date.Date == today
+    );
 
-        if (alreadyExists)
+    if (alreadyExists)
+    {
+        var updated = new RecordAttendance
         {
-            continue;
-        }
-
-        var record = new RecordAttendance
-        {
-            GradeLevel = student.GradeLevel,
-            Section = student.Section,
-            Gender = student.Gender,
-            Name = student.Name,
-            LRN = student.LRN,
-            Status = student.Status,
-            Photo = student.Photo,
-            Date = today
+            Status = student.Status
         };
 
         await _supabase.Client
             .From<RecordAttendance>()
-            .Insert(record);
+            .Where(x => x.LRN == student.LRN && x.Date.Date == today)
+            .Update(updated);
+
+        continue;
+    }
     }
 }
 private async Task ResetAttendanceAsync()
@@ -443,7 +442,11 @@ public async Task<IActionResult> OnGetFilterByDateAsync(DateTime date, string? s
         name = x.Name,
         lrn = x.LRN,
         status = x.Status,
-        photo = x.Photo
+        photo = string.IsNullOrEmpty(x.Photo)
+        ? "/images/default.png"
+        : (x.Photo.StartsWith("/studentphotos/")
+            ? x.Photo
+            : "/studentphotos/" + x.Photo)
     });
 
     return new JsonResult(result);

@@ -47,6 +47,7 @@ C:\Users\User\Documents\EAHSA\obj\Debug\net10.0\EAHSA.csproj.CoreCompileInputs.c
 C:\Users\User\Documents\EAHSA\obj\Debug\net10.0\EAHSA.MvcApplicationPartsAssemblyInfo.cache
 C:\Users\User\Documents\EAHSA\obj\Debug\net10.0\EAHSA.RazorAssemblyInfo.cache
 C:\Users\User\Documents\EAHSA\obj\Debug\net10.0\EAHSA.RazorAssemblyInfo.cs
+C:\Users\User\Documents\EAHSA\obj\Debug\net10.0\EAHSA.sourcelink.json
 C:\Users\User\Documents\EAHSA\obj\Debug\net10.0\rjimswa.dswa.cache.json
 C:\Users\User\Documents\EAHSA\obj\Debug\net10.0\rjsmrazor.dswa.cache.json
 C:\Users\User\Documents\EAHSA\obj\Debug\net10.0\rjsmcshtml.dswa.cache.json

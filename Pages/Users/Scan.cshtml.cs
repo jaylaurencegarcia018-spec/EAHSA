@@ -3,18 +3,16 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using EAHSA.Models;
 
 [IgnoreAntiforgeryToken]
-
 public class ScanModel : PageModel
 {
     private readonly SupabaseService _supabase;
 
     public ScanModel(SupabaseService supabase)
-    
     {
         _supabase = supabase;
     }
 
-        public async Task<IActionResult> OnPostScanStudent([FromForm] string lrn)
+    public async Task<IActionResult> OnPostScanStudent([FromForm] string lrn)
     {
         var student = await _supabase.Client
             .From<Attendance>()

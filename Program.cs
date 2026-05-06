@@ -14,6 +14,7 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+
 var app = builder.Build();
 
 // Error handling
@@ -32,3 +33,5 @@ app.UseSession();
 app.MapRazorPages();
 
 app.Run();
+
+app.Urls.Add("http://0.0.0.0:8080");

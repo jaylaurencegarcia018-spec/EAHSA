@@ -131,7 +131,12 @@ fetch('/Users/Scan?handler=ScanStudent', {
         document.getElementById("lrn").innerText = data.lrn
         document.getElementById("gender").innerText = data.gender
         document.getElementById("section").innerText = data.section
-        document.getElementById("photo").src = "/studentphotos/" + data.photo + ".png";
+        document.getElementById("photo").src =
+    data.photo
+        ? (data.photo.startsWith("/studentphotos/")
+            ? data.photo
+            : "/studentphotos/" + data.photo)
+        : "/images/default.png";
 
 
         let popup = document.getElementById("popup")
