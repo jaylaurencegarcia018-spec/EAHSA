@@ -28,6 +28,13 @@ namespace EAHSA.Pages.Admin
         [BindProperty(SupportsGet = true)]
         public string? Section { get; set; }
 
+        public string Status { get; set; } = "";
+        public string GradeLevel { get; set; } = "";
+        public string Gender { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string LRN { get; set; } = "";
+        public DateTime Date { get; set; }
+
         [BindProperty(SupportsGet = true)]
         public int CurrentPage { get; set; } = 1;
 
@@ -173,6 +180,8 @@ var check = await _supabase.Client
         await SaveDailyAttendanceAsync();  // save current status (present/absent)
         await ResetAttendanceAsync();      // reset for next day
     }
+
+    
 if (date.HasValue)
 {
     var start = date.Value.Date;
@@ -182,13 +191,21 @@ if (date.HasValue)
         .From<RecordAttendance>()
         .Get();
 
+foreach (var x in history.Models)
+{
+    Console.WriteLine($"DB: {x.Date} | DATE ONLY: {x.Date.Date}");
+}
+
     var filtered = history.Models
-        .Where(x => x.Date >= start && x.Date < end)
+        .Where(x => x.Date.Date == start)
         .AsQueryable();
 
     if (!string.IsNullOrEmpty(grade))
     {
-        filtered = filtered.Where(x => x.GradeLevel == grade);
+        filtered = filtered.Where(x =>
+        !string.IsNullOrEmpty(x.GradeLevel) &&
+        x.GradeLevel.Trim().ToLower() == grade!.Trim().ToLower()
+);
     }
 
     if (!string.IsNullOrEmpty(Section))
@@ -233,7 +250,10 @@ var response = await _supabase.Client
             }
 
             if (!string.IsNullOrEmpty(grade))
-                records = records.Where(x => x.GradeLevel!.ToString() == grade).ToList();
+                        records = records.Where(x =>
+            !string.IsNullOrEmpty(x.GradeLevel) &&
+            x.GradeLevel.Trim().ToLower() == grade!.Trim().ToLower()
+        ).ToList();
 
             if (!string.IsNullOrEmpty(Section))
                 records = records.Where(x => x.Section == Section).ToList();
@@ -302,7 +322,10 @@ var response = await _supabase.Client
                 Name = Name,
                 LRN = LRN,
                 Status = Status,
-                Photo = photoPath
+                Photo = photoPath,
+                Date = string.IsNullOrEmpty(Request.Form["Date"])
+                ? DateTime.Today
+                : DateTime.Parse(Request.Form["Date"]!)
             };
 
             await _supabase.Client
@@ -335,10 +358,26 @@ var response = await _supabase.Client
                 updated.Photo = "/studentphotos/" + fileName;
             }
 
-            await _supabase.Client
-                .From<Attendance>()
-                .Where(x => x.Id == updated.Id)
-                .Update(updated);
+        var status = updated.Status ?? "Absent";
+        var grade = updated.GradeLevel ?? "";
+        var section = updated.Section ?? "";
+        var gender = updated.Gender ?? "";
+        var name = updated.Name ?? "";
+        var lrn = updated.LRN ?? "";
+
+        Console.WriteLine($"Status value: {status}");
+
+    await _supabase.Client
+        .From<Attendance>()
+        .Where(x => x.Id == updated.Id)
+        .Set(x => x.Status, status!)
+        .Set(x => x.GradeLevel, grade!)
+        .Set(x => x.Section, section!)
+        .Set(x => x.Gender, gender!)
+        .Set(x => x.Name, name!)
+        .Set(x => x.LRN, lrn!)
+        .Set(x => x.Date, DateTime.Now)
+        .Update();
 
             return RedirectToPage();
         }
@@ -425,7 +464,7 @@ public async Task<IActionResult> OnGetFilterByDateAsync(DateTime date, string? s
 
     // ✅ FILTER BY DATE (SAFE)
     records = records
-        .Where(x => x.Date >= start && x.Date < end)
+        .Where(x => x.Date.Date == date.Date)
         .ToList();
 
     // ✅ FILTER BY SECTION

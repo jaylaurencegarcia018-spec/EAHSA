@@ -30,6 +30,7 @@
             : Model.AttendanceList
                 .OrderByDescending(x => x.Date)
                 .FirstOrDefault()?.Date.ToString("yyyy-MM-dd"))"
+                
        onchange="filterDate()" />
 
     <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Search student..." />
@@ -154,6 +155,23 @@ onclick="openImageModal(this.src)" />
         </form>
     </div>
 </div>
+
+<script>
+document.getElementById("dateFilter").addEventListener("change", function () {
+    const date = this.value;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const grade = urlParams.get("grade");
+    const section = urlParams.get("section");
+
+    let newUrl = `/Admin/Attendance?date=${date}`;
+
+    if (grade) newUrl += `&grade=${grade}`;
+    if (section) newUrl += `&section=${section}`;
+
+    window.location.href = newUrl;
+});
+</script>
 
 <script>
     function openModal() {

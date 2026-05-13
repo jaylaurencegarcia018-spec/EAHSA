@@ -1,16 +1,18 @@
 @page
 @model EAHSA.Pages.Users.AttendanceModel
+
 @{
     Layout = "_UserLayout";
 }
-
 
 <h1>Attendance</h1>
 <p>Manage student attendance records below.</p>
 
 <div class="actions">
     <button class="btn-dark" onclick="openModal()">Add</button>
-    <a asp-page-handler="ExportExcel"
+
+<a id="printBtn"
+   asp-page-handler="ExportExcel"
    asp-route-SelectedGrade="@Model.SelectedGrade"
    asp-route-SelectedSection="@Model.SelectedSection"
    class="btn btn-secondary">
@@ -19,319 +21,307 @@
 </div>
 
 <div class="filters">
+    <select id="sectionFilter" onchange="filterSection()">
+        <option value="">All Sections</option>
 
-<select id="sectionFilter" onchange="filterSection()">
-<option value="">All Sections</option>
-@foreach (var sec in Model.AttendanceList.Select(x => x.Section).Distinct())
-{
-<option value="@sec">@sec</option>
-}
-</select>
+        @foreach (var sec in Model.AttendanceList.Select(x => x.Section).Distinct())
+        {
+            <option value="@sec">@sec</option>
+        }
+    </select>
 
-<input type="date" />
+<input type="date" id="dateFilter"
+       value="@(Model.SelectedDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))" />
 
-<input type="text"
-id="searchInput"
-onkeyup="searchTable()"
-placeholder="Search student..." />
-
+    <input type="text"
+           id="searchInput"
+           onkeyup="searchTable()"
+           placeholder="Search student..." />
 </div>
 
 <table id="attendanceTable">
+    <thead>
+        <tr>
+            <th>Photo</th>
+            <th>Grade Level</th>
+            <th>Section</th>
+            <th>Gender</th>
+            <th>Name</th>
+            <th>LRN</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
 
-<thead>
-<tr>
-<th>Photo</th>
-<th>Grade Level</th>
-<th>Section</th>
-<th>Gender</th>
-<th>Name</th>
-<th>LRN</th>
-<th>Status</th>
-<th>Actions</th>
-</tr>
-</thead>
+    <tbody>
+        @foreach (var item in Model.AttendanceList)
+        {
+            <tr>
+                <td>
+                    <img src="@item.Photo"
+                         width="40"
+                         height="40"
+                         style="border-radius:50%;object-fit:cover;" />
+                </td>
 
-<tbody>
+                <td>@item.GradeLevel</td>
 
-@foreach (var item in Model.AttendanceList)
-{
+                <td class="section">@item.Section</td>
 
-<tr>
+                <td>@item.Gender</td>
 
-<td>
-<img src="@item.Photo"
-width="40"
-height="40"
-style="border-radius:50%;object-fit:cover;" />
-</td>
+                <td>@item.Name</td>
 
-<td>@item.GradeLevel</td>
+                <td>@item.LRN</td>
 
-<td class="section">@item.Section</td>
+                <td>@item.Status</td>
 
-<td>@item.Gender</td>
+                <td>
+                    <button class="btn-dark"
+                            onclick="openEditModal('@item.Id','@item.GradeLevel','@item.Section','@item.Gender','@item.Name','@item.LRN','@item.Status')">
+                        Edit
+                    </button>
 
-<td>@item.Name</td>
+                    <form method="post"
+                          asp-page-handler="Delete"
+                          style="display:inline;">
 
-<td>@item.LRN</td>
+                        <input type="hidden"
+                               name="Id"
+                               value="@item.Id" />
 
-<td>@item.Status</td>
-
-<td>
-
-<button class="btn-dark"
-onclick="openEditModal('@item.Id','@item.GradeLevel','@item.Section','@item.Gender','@item.Name','@item.LRN','@item.Status')">
-Edit
-</button>
-
-<form method="post" asp-page-handler="Delete" style="display:inline;">
-
-<input type="hidden" name="Id" value="@item.Id" />
-
-<button type="submit"
-class="btn-danger"
-onclick="return confirm('Are you sure you want to delete this student?')">
-Delete
-</button>
-
-</form>
-
-</td>
-
-</tr>
-
-}
-
-</tbody>
+                        <button type="submit"
+                                class="btn-danger"
+                                onclick="return confirm('Are you sure you want to delete this student?')">
+                            Delete
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
 </table>
 
-
-
 <!-- ADD MODAL -->
-
 <div id="addModal" class="modal">
+    <div class="modal-content">
+        <h3>Add Attendance</h3>
 
-<div class="modal-content">
+        <form method="post"
+              asp-page-handler="Add"
+              enctype="multipart/form-data">
 
-<h3>Add Attendance</h3>
+            <input type="hidden"
+                   name="GradeLevel"
+                   value="@Model.SelectedGrade" />
 
-<form method="post" asp-page-handler="Add" enctype="multipart/form-data">
+            <p>
+                <strong>Grade Level:</strong>
+                Grade @Model.SelectedGrade
+            </p>
 
-<input type="hidden" name="GradeLevel" value="@Model.SelectedGrade" />
+            <input type="text"
+                   name="Section"
+                   placeholder="Section"
+                   required />
 
-<p><strong>Grade Level:</strong> Grade @Model.SelectedGrade</p>
+            <input type="text"
+                   name="Gender"
+                   placeholder="Gender"
+                   required />
 
-<input type="text" name="Section" placeholder="Section" required />
+            <input type="text"
+                   name="Name"
+                   placeholder="Name"
+                   required />
 
-<input type="text" name="Gender" placeholder="Gender" required />
+            <input type="text"
+                   name="LRN"
+                   placeholder="LRN"
+                   required />
 
-<input type="text" name="Name" placeholder="Name" required />
+            <label>Student Photo (1x1)</label>
 
-<input type="text" name="LRN" placeholder="LRN" required />
+            <input type="file"
+                   name="PhotoFile"
+                   accept="image/*"
+                   required />
 
-<label>Student Photo (1x1)</label>
+            <select name="Status">
+                <option value="Present">Present</option>
+                <option value="Absent">Absent</option>
+            </select>
 
-<input type="file" name="PhotoFile" accept="image/*" required />
+            <div class="modal-buttons">
+                <button type="submit" class="btn-dark">
+                    Save
+                </button>
 
-<select name="Status">
-<option value="Present">Present</option>
-<option value="Absent">Absent</option>
-</select>
-
-<div class="modal-buttons">
-
-<button type="submit" class="btn-dark">
-Save
-</button>
-
-<button type="button"
-class="btn-gray"
-onclick="closeModal()">
-Cancel
-</button>
-
+                <button type="button"
+                        class="btn-gray"
+                        onclick="closeModal()">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
-
-</form>
-
-</div>
-</div>
-
-
 
 <!-- EDIT MODAL -->
-
 <div id="editModal" class="modal">
+    <div class="modal-content">
+        <h3>Edit Attendance</h3>
 
-<div class="modal-content">
+        <form method="post"
+              asp-page-handler="Edit"
+              enctype="multipart/form-data">
 
-<h3>Edit Attendance</h3>
+            <input type="hidden"
+                   id="editId"
+                   name="Id" />
 
-<form method="post"
-asp-page-handler="Edit"
-enctype="multipart/form-data">
+            <select id="editGrade"
+                    name="GradeLevel"
+                    required>
 
-<input type="hidden" id="editId" name="Id" />
+                <option value="7">Grade 7</option>
+                <option value="8">Grade 8</option>
+                <option value="9">Grade 9</option>
+                <option value="10">Grade 10</option>
+            </select>
 
-<select id="editGrade" name="GradeLevel" required>
+            <input type="text"
+                   id="editSection"
+                   name="Section"
+                   required />
 
-<option value="7">Grade 7</option>
-<option value="8">Grade 8</option>
-<option value="9">Grade 9</option>
-<option value="10">Grade 10</option>
+            <input type="text"
+                   id="editGender"
+                   name="Gender"
+                   required />
 
-</select>
+            <input type="text"
+                   id="editName"
+                   name="Name"
+                   required />
 
-<input type="text"
-id="editSection"
-name="Section"
-required />
+            <input type="text"
+                   id="editLRN"
+                   name="LRN"
+                   required />
 
-<input type="text"
-id="editGender"
-name="Gender"
-required />
+            <label>Replace Photo</label>
 
-<input type="text"
-id="editName"
-name="Name"
-required />
+            <input type="file"
+                   name="PhotoFile"
+                   accept="image/*" />
 
-<input type="text"
-id="editLRN"
-name="LRN"
-required />
+            <select id="editStatus" name="Status">
+                <option value="Present">Present</option>
+                <option value="Absent">Absent</option>
+            </select>
 
-<label>Replace Photo</label>
+            <div class="modal-buttons">
+                <button type="submit" class="btn-dark">
+                    Update
+                </button>
 
-<input type="file"
-name="PhotoFile"
-accept="image/*" />
-
-<select id="editStatus" name="Status">
-
-<option value="Present">Present</option>
-<option value="Absent">Absent</option>
-
-</select>
-
-<div class="modal-buttons">
-
-<button type="submit"
-class="btn-dark">
-Update
-</button>
-
-<button type="button"
-class="btn-gray"
-onclick="closeEditModal()">
-Cancel
-</button>
-
+                <button type="button"
+                        class="btn-gray"
+                        onclick="closeEditModal()">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
-
-</form>
-
-</div>
-</div>
-
-
 
 <script>
+    function openModal() {
+        document.getElementById("addModal").style.display = "flex";
+    }
 
-function openModal(){
-document.getElementById("addModal").style.display="flex";
-}
+    function closeModal() {
+        document.getElementById("addModal").style.display = "none";
+    }
 
-function closeModal(){
-document.getElementById("addModal").style.display="none";
-}
+    function searchTable() {
+        var input = document.getElementById("searchInput");
+        var filter = input.value.toLowerCase();
 
+        var rows = document.querySelectorAll("#attendanceTable tbody tr");
 
+        rows.forEach(row => {
+            if (row.innerText.toLowerCase().includes(filter))
+                row.style.display = "";
+            else
+                row.style.display = "none";
+        });
+    }
 
-function searchTable(){
+    function filterSection() {
+        var section = document.getElementById("sectionFilter").value.toLowerCase();
 
-var input=document.getElementById("searchInput");
+        var rows = document.querySelectorAll("#attendanceTable tbody tr");
 
-var filter=input.value.toLowerCase();
+        rows.forEach(row => {
+            var rowSection = row.querySelector(".section").innerText.toLowerCase();
 
-var rows=document.querySelectorAll("#attendanceTable tbody tr");
+            if (section === "" || rowSection === section)
+                row.style.display = "";
+            else
+                row.style.display = "none";
+        });
+    }
 
-rows.forEach(row=>{
+    function openEditModal(id, grade, section, gender, name, lrn, status) {
+        document.getElementById("editId").value = id;
+        document.getElementById("editGrade").value = grade;
+        document.getElementById("editSection").value = section;
+        document.getElementById("editGender").value = gender;
+        document.getElementById("editName").value = name;
+        document.getElementById("editLRN").value = lrn;
+        document.getElementById("editStatus").value = status;
 
-if(row.innerText.toLowerCase().includes(filter))
-row.style.display="";
-else
-row.style.display="none";
+        document.getElementById("editModal").style.display = "flex";
+    }
 
-});
+    function closeEditModal() {
+        document.getElementById("editModal").style.display = "none";
+    }
 
-}
+document.addEventListener("DOMContentLoaded", function () {
 
+    const dateInput = document.getElementById("dateFilter");
 
+    if (dateInput) {
+        dateInput.addEventListener("change", function () {
 
-function filterSection(){
+            var selectedDate = this.value;
 
-var section=document.getElementById("sectionFilter").value.toLowerCase();
+            // 🔥 kunin current values
+            var grade = "@Model.SelectedGrade";
+            var section = document.getElementById("sectionFilter").value;
 
-var rows=document.querySelectorAll("#attendanceTable tbody tr");
+            let url = "?";
 
-rows.forEach(row=>{
+            if (selectedDate) {
+                url += "SelectedDate=" + selectedDate;
+            }
 
-var rowSection=row.querySelector(".section").innerText.toLowerCase();
+            if (grade) {
+                url += "&SelectedGrade=" + grade;
+            }
 
-if(section===""||rowSection===section)
-row.style.display="";
-else
-row.style.display="none";
+            if (section) {
+                url += "&SelectedSection=" + section;
+            }
 
-});
+            window.location.href = url;
 
-}
-
-
-
-function openEditModal(id,grade,section,gender,name,lrn,status){
-
-document.getElementById("editId").value=id;
-
-document.getElementById("editGrade").value=grade;
-
-document.getElementById("editSection").value=section;
-
-document.getElementById("editGender").value=gender;
-
-document.getElementById("editName").value=name;
-
-document.getElementById("editLRN").value=lrn;
-
-document.getElementById("editStatus").value=status;
-
-document.getElementById("editModal").style.display="flex";
-
-}
-
-
-
-function closeEditModal(){
-document.getElementById("editModal").style.display="none";
-}
-
-
-
-document.getElementById("printBtn").addEventListener("click",function(){
-
-var section=document.getElementById("sectionFilter").value;
-
-if(section===""){
-section="AllSections";
-}
-
-window.location.href="?handler=ExportExcel&Section="+section;
+        });
+    }
 
 });
-
-
 
 </script>

@@ -30,13 +30,13 @@ public class SupabaseService
         }
         catch (GotrueException ex)
         {
-            // Handle invalid credentials safely
             if (ex.Message.Contains("Invalid login credentials"))
                 return null;
 
-            throw; // rethrow unexpected errors
+            throw;
         }
     }
+
     public async Task<List<Attendance>> GetAttendance()
     {
         var response = await _client
@@ -45,11 +45,28 @@ public class SupabaseService
 
         return response.Models;
     }
+
     public async Task<User?> SignUp(string email, string password)
     {
         var session = await _client.Auth.SignUp(email, password);
         return session?.User;
     }
+
+    // 🔥 ADD THIS PART
+public async Task UpdateAttendance(Attendance data)
+{
+    await _client
+        .From<Attendance>()
+        .Where(x => x.Id == data.Id)
+        .Set(x => x.Status, data.Status)
+        .Set(x => x.Name, data.Name)
+        .Set(x => x.Gender, data.Gender)
+        .Set(x => x.Section, data.Section)
+        .Set(x => x.GradeLevel, data.GradeLevel)
+        .Set(x => x.LRN, data.LRN)
+        .Set(x => x.Photo, data.Photo)
+        .Update();
+}
 
     public Supabase.Client Client => _client;
 }

@@ -15,59 +15,59 @@ namespace EAHSA.Pages.Admin
         public int TotalStudents { get; set; }
         public int PresentToday { get; set; }
         public int AbsentToday { get; set; }
-        public int TardyToday { get; set; }
 
         public List<string> ChartLabels { get; set; } = new();
         public List<int> ChartData { get; set; } = new();
 
         public List<RecentAbsence> RecentAbsences { get; set; } = new();
 
-        public async Task OnGet()
+public async Task OnGet()
+{
+    var students = await _supabase.Client
+        .From<Profile>()
+        .Get();
+
+    var attendance = await _supabase.Client
+        .From<Attendance>()
+        .Get();
+
+    var today = DateTime.Today;
+
+    var todayRecords = attendance.Models
+        .Where(a => a.Date.Date == today)
+        .ToList();
+
+TotalStudents = attendance.Models
+    .Select(a => a.Name)
+    .Distinct()
+    .Count();
+
+    // ✅ SAFE NULL CHECK
+    PresentToday = todayRecords.Count(a => (a.Status ?? "") == "Present");
+    AbsentToday = todayRecords.Count(a => (a.Status ?? "") == "Absent");
+
+    // ✅ FIXED (no foreach)
+    RecentAbsences = todayRecords
+        .Where(a => (a.Status ?? "") == "Absent")
+        .Take(10)
+        .Select(a => new RecentAbsence
         {
-            var students = await _supabase.Client
-                .From<Profile>()
-                .Get();
+            Name = a.Name ?? "Unknown",
+            Grade = "Grade " + (a.GradeLevel ?? ""),
+            Status = a.Status ?? "Absent"
+        })
+        .ToList();
 
-            var attendance = await _supabase.Client
-                .From<Attendance>()
-                .Get();
+    // ✅ CHART
+    ChartLabels = new List<string> { "Grade 7", "Grade 8", "Grade 9", "Grade 10" };
 
-            var today = DateTime.Today;
-
-            var todayRecords = attendance.Models
-                .Where(a => a.Date.Date == today)
-                .ToList();
-
-            TotalStudents = students.Models.Count;
-
-            PresentToday = todayRecords.Count(a => a.Status == "Present");
-            AbsentToday = todayRecords.Count(a => a.Status == "Absent");
-            TardyToday = todayRecords.Count(a => a.Status == "Tardy");
-
-            var absences = todayRecords
-                .Where(a => a.Status == "Absent")
-                .Take(10);
-
-            foreach (var item in absences)
-            {
-                RecentAbsences.Add(new RecentAbsence
-                {
-                    Name = item.Name,
-                    Date = item.Date.ToString("MMM dd, yyyy"),
-                    Status = item.Status
-                });
-            }
-
-            // Chart sample data (since there is no Date column)
-            ChartLabels.Add("Grade 7");
-            ChartLabels.Add("Grade 8");
-            ChartLabels.Add("Grade 9");
-            ChartLabels.Add("Grade 10");
-
-            ChartData.Add(todayRecords.Where(a => a.GradeLevel == "7" && a.Status == "Absent").Count());
-            ChartData.Add(todayRecords.Where(a => a.GradeLevel == "8" && a.Status == "Absent").Count());
-            ChartData.Add(todayRecords.Where(a => a.GradeLevel == "9" && a.Status == "Absent").Count());
-            ChartData.Add(todayRecords.Where(a => a.GradeLevel == "10" && a.Status == "Absent").Count());
-        }
+    ChartData = new List<int>
+    {
+        todayRecords.Count(a => a.GradeLevel == "7" && (a.Status ?? "") == "Absent"),
+        todayRecords.Count(a => a.GradeLevel == "8" && (a.Status ?? "") == "Absent"),
+        todayRecords.Count(a => a.GradeLevel == "9" && (a.Status ?? "") == "Absent"),
+        todayRecords.Count(a => a.GradeLevel == "10" && (a.Status ?? "") == "Absent")
+    };
+}
     }
 }
